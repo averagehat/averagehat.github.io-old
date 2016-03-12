@@ -1,2 +1,181 @@
-<a href="/mypysumproduct.html"> type stuff </a>
-<a href="/biofp.html"> simple combinators </a> 
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Averagehat.GitHub.io by averagehat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Averagehat.GitHub.io</h1>
+      <h2 class="project-tagline"></h2>
+    </section>
+
+    <section class="main-content">
+      <h3>
+<a id="some-things-with-mypy-sum-and-product-types" class="anchor" href="#some-things-with-mypy-sum-and-product-types" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Some things with mypy: sum and product types</h3>
+
+<p><a href="https://www.python.org/dev/peps/pep-0484/">A recent pep</a> solidifies type annotations in python 2 and 3. These type annotations are compatible with current versions of python. 
+They can be ignored altogether, used however you wish in your own program, or used to typecheck your code with <a href="github.com/python/mypyp">mypy</a>.
+This post will discuss the last option. Later we'll see how python's strong introspective powers can be used to leverage these types in conjunction with
+mypy.</p>
+
+<p><code>mypy</code> enables static typing in python. The features include defacto case-classes (using named tuples) and Union types. These are known
+more generally as "product types" and "sum types" respectively. A product type is similar to a class in Java. It has pre-defined members (private or public)
+of other types. In a sense it is a "product" of these other types. In mypy, one can declare a product type using classes, or more simply using <code>NamedTuple.</code>
+For example, let's create a product type for points in a 3D plane.</p>
+
+<div class="highlight highlight-source-python"><pre>Point3D <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>Point3D<span class="pl-pds">"</span></span>, [(<span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>, <span class="pl-c1">float</span>), (<span class="pl-s"><span class="pl-pds">"</span>y<span class="pl-pds">"</span></span>, <span class="pl-c1">float</span>), (<span class="pl-s"><span class="pl-pds">"</span>z<span class="pl-pds">"</span></span>, <span class="pl-c1">float</span>)])</pre></div>
+
+<p>If we wanted to use a simple tuple instead, we could declare that so:</p>
+
+<div class="highlight highlight-source-python"><pre>Point3DTuple <span class="pl-k">=</span> Tuple[<span class="pl-c1">float</span>, <span class="pl-c1">float</span>, <span class="pl-c1">float</span>]</pre></div>
+
+<p>Let's look at what our named tuple can, and more importantly can't, do within mypy's type world. All the displayed errors
+are part of mypy's output, which provides the line of the error as well as an explanation. Keep in mind these are all erorrs caught before
+the program, or even any tests, are run. These errors can also be integrated with editors or IDEs to provde real-time feedback.</p>
+
+<p>It can be created and accessed just like <code>collections.namedtuple.</code></p>
+
+<div class="highlight highlight-source-python"><pre>point <span class="pl-k">=</span> Point3D(<span class="pl-c1">0</span>, <span class="pl-c1">1.0</span>, <span class="pl-c1">3.98</span>)
+x <span class="pl-k">=</span> point.x
+y <span class="pl-k">=</span> point[<span class="pl-c1">1</span>] <span class="pl-c"># this typechecks, it probably shouldn't</span></pre></div>
+
+<p>mypy knows how long the tuple is, and what types its members are!</p>
+
+<div class="highlight highlight-source-python"><pre>r <span class="pl-k">=</span> point[<span class="pl-c1">99</span>]
+foo.py:<span class="pl-c1">10</span>: error: Tuple index out of <span class="pl-c1">range</span></pre></div>
+
+<p>mypy enforces the safety of common operators. This avoids meaningless comparisons, for example, which are uncaught by python's runtime:</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">&gt;&gt;</span><span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>foo<span class="pl-pds">"</span></span> <span class="pl-k">&gt;</span> sys.maxint
+ <span class="pl-c1">True</span> <span class="pl-c"># sure, why not?</span></pre></div>
+
+<div class="highlight highlight-source-python"><pre>point.x <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>Eureka<span class="pl-pds">"</span></span>
+foo.py:<span class="pl-c1">10</span>: error: Unsupported operand types <span class="pl-k">for</span> <span class="pl-k">+</span> (<span class="pl-s"><span class="pl-pds">"</span>float<span class="pl-pds">"</span></span> <span class="pl-k">and</span> <span class="pl-s"><span class="pl-pds">"</span>str<span class="pl-pds">"</span></span>)
+
+x <span class="pl-k">=</span> point.x <span class="pl-c"># mypy infers the type after assignment</span>
+
+x <span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">"</span>Eureka<span class="pl-pds">"</span></span>
+foo.py:<span class="pl-c1">10</span>: error: Unsupported operand types <span class="pl-k">for</span> <span class="pl-k">&gt;</span> (<span class="pl-s"><span class="pl-pds">"</span>float<span class="pl-pds">"</span></span> <span class="pl-k">and</span> <span class="pl-s"><span class="pl-pds">"</span>str<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>mypy limits attribute access:</p>
+
+<div class="highlight highlight-source-python"><pre>sneaky <span class="pl-k">=</span> point.gecko
+foo.py:<span class="pl-c1">13</span>: error: <span class="pl-s"><span class="pl-pds">"</span>Point3D<span class="pl-pds">"</span></span> has no attribute <span class="pl-s"><span class="pl-pds">"</span>gecko<span class="pl-pds">"</span></span></pre></div>
+
+<p>mypy supports generics. A generic can be a lot of things; A <code>list</code>, an <code>Iterable</code>, or something equivalent to scala/java 8's <code>Option</code> type. If a generic is a collection, all elements of the collection must be of the same type. mypy comes equipped with a number of generic types; take for example <code>List</code>, which is an alias for the built-in <code>list</code>.</p>
+
+<div class="highlight highlight-source-python"><pre>ListOfInts <span class="pl-k">=</span> List[<span class="pl-c1">int</span>]</pre></div>
+
+<p>You can also create types by subclassing <code>Generic</code>.</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">class</span> <span class="pl-en">Option</span>(Generic[<span class="pl-c1">T</span>]):
+    <span class="pl-k">def</span> <span class="pl-en">getOrElse</span>(<span class="pl-smi">t</span>: <span class="pl-c1">T</span>) -&gt; <span class="pl-c1">T</span>:
+       . . . </pre></div>
+
+<p>It's possible to use multiple type variables within a generic:</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-c1">E</span> <span class="pl-k">=</span> TypeVar(<span class="pl-s"><span class="pl-pds">"</span>E<span class="pl-pds">"</span></span>)
+<span class="pl-c1">V</span> <span class="pl-k">=</span> TypeVar(<span class="pl-s"><span class="pl-pds">"</span>V<span class="pl-pds">"</span></span>)
+<span class="pl-k">class</span> <span class="pl-en">Either</span>(Generic[<span class="pl-c1">E</span>,<span class="pl-c1">V</span>]):
+    . . . . </pre></div>
+
+<p>Let's use <code>List</code> and <code>3DPoint</code> to create a more complex product type: <code>Robot Legs</code>.</p>
+
+<div class="highlight highlight-source-python"><pre>RobotLegs <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>RobotLegs<span class="pl-pds">"</span></span>, [(<span class="pl-s"><span class="pl-pds">"</span>leftLeg<span class="pl-pds">"</span></span>, List[Point3D]), (<span class="pl-s"><span class="pl-pds">"</span>rightLeg<span class="pl-pds">"</span></span>, List[Point3D]), (<span class="pl-s"><span class="pl-pds">"</span>color<span class="pl-pds">"</span></span>, <span class="pl-c1">str</span>)])</pre></div>
+
+<p>Note that we've defined the field <code>color</code> as simply a string, allowing us to create robot legs with nonsense colors. It's also possible to create robot legs with negative integers for coordinates! We only want pastel colors, and robots which exist in the cartesian plane. </p>
+
+<div class="highlight highlight-source-python"><pre>blueRobot <span class="pl-k">=</span> RobotLegs(points, points, <span class="pl-s"><span class="pl-pds">"</span>fizbizzle<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>Of course, we could check for this condition in the functions that use the color:</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">def</span> <span class="pl-en">getColor</span>(<span class="pl-smi">legs</span>: RobotLegs) -&gt; <span class="pl-c1">int</span>:
+    <span class="pl-k">if</span> legs.color <span class="pl-k">not</span> <span class="pl-k">in</span> [<span class="pl-s"><span class="pl-pds">"</span>skyblue<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>red<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>white<span class="pl-pds">"</span></span>]:
+        <span class="pl-k">raise</span> <span class="pl-c1">ValueError</span>(<span class="pl-s"><span class="pl-pds">"</span>Invalid color <span class="pl-c1">%s</span><span class="pl-pds">"</span></span> <span class="pl-k">%</span> legs.color)
+    <span class="pl-k">else</span>:
+         . . . . </pre></div>
+
+<p>That's a hassle, and it's easy to forget to do these checks in every function. Instead, let's nip this in the bud. 
+We really want to make it is easy on ourselves and be <em>really really sure</em> that we only have to validate our input once. We can do all the validation--cleaning up data from I/O, verifying it matches a certain shape, creating errors etc.--when we construct the instances of our types. That way all functions which accept those types are relieved from the obligation of checking themselves.</p>
+
+<div class="highlight highlight-source-python"><pre>SkyBlue <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>SkyBlue<span class="pl-pds">"</span></span>, [])
+PastelRed <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>PastelRed<span class="pl-pds">"</span></span>, [])
+White <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>White<span class="pl-pds">"</span></span>, [])
+
+Color <span class="pl-k">=</span> Union[Blue, PastelRed, White]
+
+RobotLegs <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>RobotLegs<span class="pl-pds">"</span></span>, [(<span class="pl-s"><span class="pl-pds">"</span>leftLeg<span class="pl-pds">"</span></span>, List[Point3D]), (<span class="pl-s"><span class="pl-pds">"</span>rightLeg<span class="pl-pds">"</span></span>, List[Point3D]), (<span class="pl-s"><span class="pl-pds">"</span>color<span class="pl-pds">"</span></span>, Color)])</pre></div>
+
+<p>Now we can be assured that our color is one of the primaries (always a good starting pint for giant robots), so we don't have to worry about validating our data again!</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">def</span> <span class="pl-en">getColor</span>(<span class="pl-smi">legs</span>: RobotLegs) -&gt; <span class="pl-c1">int</span>:
+    <span class="pl-k">if</span> legs.color <span class="pl-k">==</span> SkyBlue():  <span class="pl-k">return</span> <span class="pl-c1"><span class="pl-k">0x</span>87CEFA</span> 
+    <span class="pl-k">if</span> <span class="pl-c1">isinstance</span>(legs.color, SkyBlue): <span class="pl-k">return</span>  <span class="pl-c1"><span class="pl-k">0x</span>87CEFA</span> <span class="pl-c"># this is equivalent</span></pre></div>
+
+<p>We can even safely use a statically typed dictionary which never raise a KeyErorr:</p>
+
+<div class="highlight highlight-source-python"><pre>colors <span class="pl-k">=</span> { SkyBlue() : <span class="pl-c1"><span class="pl-k">0x</span>87CEFA</span> } <span class="pl-c"># <span class="pl-c">type:</span> <span class="pl-c">Dict</span><span class="pl-c">[</span><span class="pl-c">Color</span><span class="pl-c">,</span><span class="pl-c">int</span><span class="pl-c">]</span></span>
+. . . . </pre></div>
+
+<p>Now, let's make sure the 3D coordinates are valid. For this, we'll need something more powerful than a simple <code>NamedTuple</code>. We'll want to refuse all non-positive input. But note that a traditional python class won't be safe because python classes are mutable by default! It doesn't do much good to make a safe <code>3DPoint</code> if one can simply overwrite its attributes. But we can create more complex immutable objects in python:</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">class</span> <span class="pl-en">Coordinate</span>(<span class="pl-c1">object</span>):
+    <span class="pl-k">def</span> <span class="pl-c1">__new__</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">x</span>: <span class="pl-c1">float</span>, <span class="pl-smi">y</span>: <span class="pl-c1">float</span>, <span class="pl-smi">z</span>: <span class="pl-c1">float</span>) -&gt; Point3D:
+        <span class="pl-k">assert</span> x <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span> <span class="pl-k">and</span> y <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span> <span class="pl-k">and</span> z <span class="pl-k">&gt;=</span> <span class="pl-c1">0</span>
+        <span class="pl-k">return</span> Point3D(x, y, z)</pre></div>
+
+<p>In fact it's possible to use this technique to <em>guarantee</em> that our function will only ever get valid input. It's only possible to construct the sum type of <code>RobotLegs</code> through the union type of <code>Color</code>; <code>Color</code> is by definition one of <code>Blue</code>, <code>Red</code>. . . and points
+In languages with the concept of private constructors, it's possible to <em>guarantee</em> that a RobotLegs cannot be created an invalid state--and therefore that <code>getColor</code> can never be passed invalid data--by making the <code>RobotLegs</code> constructor private. Unfortunately, we can only document the <code>make3DCoordinates</code> function as the point of entry for our API--we can't exclude the constructor as private.</p>
+
+<p>Note that the assurance offered by static typing is significantly stronger than the contract offered by ducked typing. If we simply accepted an object with <code>leftLeg</code> <code>rightLeg</code> and <code>color</code> as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type!</p>
+
+<p><code>Color</code> is a very simple Union type, analogous to the "Enums" of other languages (including python 3), while providing additional safety. Bution union types are more powerful; it's possible to create a union type out of product types, and model arbitrary complex 
+systems this way. You can think of these types as representing the "set of all possible inputs and outputs" and functions accepting these types as representing the "cobminators" or "all the things I can ever do with my inputs". Together, these form a sort of "algebra" that represents your domain. In the domain of giant robots:</p>
+
+<div class="highlight highlight-source-python"><pre>Rifle <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">'</span>Rifle<span class="pl-pds">'</span></span>, [(<span class="pl-s"><span class="pl-pds">'</span>ammo<span class="pl-pds">'</span></span> , <span class="pl-c1">int</span>), (<span class="pl-s"><span class="pl-pds">'</span>model<span class="pl-pds">'</span></span> , <span class="pl-c1">str</span>)])
+Knife <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">'</span>Knife<span class="pl-pds">'</span></span>, [(<span class="pl-s"><span class="pl-pds">'</span>shape<span class="pl-pds">'</span></span> , List[Coordinate]), (<span class="pl-s"><span class="pl-pds">'</span>thatsNotAKnife<span class="pl-pds">'</span></span>, <span class="pl-c1">bool</span>)])
+
+weapon <span class="pl-k">=</span> Union[Rifle, Knife]
+
+RobotLegs <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">"</span>RobotArms<span class="pl-pds">"</span></span>, [(<span class="pl-s"><span class="pl-pds">"</span>leftArm<span class="pl-pds">"</span></span>, List[Coordinate]), (<span class="pl-s"><span class="pl-pds">"</span>rightArm<span class="pl-pds">"</span></span>, List[Coordinate]), (<span class="pl-s"><span class="pl-pds">"</span>color<span class="pl-pds">"</span></span>, Color)])
+
+GiantRobot <span class="pl-k">=</span> NamedTuple(<span class="pl-s"><span class="pl-pds">'</span>GiantRobot<span class="pl-pds">'</span></span>, [(<span class="pl-s"><span class="pl-pds">'</span>weapon<span class="pl-pds">'</span></span>, Weapon), (<span class="pl-s"><span class="pl-pds">'</span>legs<span class="pl-pds">'</span></span> , RobotLegs), (<span class="pl-s"><span class="pl-pds">'</span>arms<span class="pl-pds">'</span></span>, RobotArms)])
+
+<span class="pl-k">def</span> <span class="pl-en">canFight</span>(<span class="pl-smi">robot</span>: GiantRobot) -&gt; <span class="pl-c1">bool</span>:
+    <span class="pl-k">if</span> <span class="pl-c1">isinstance</span>(robot.weapon, Rifle):
+        <span class="pl-k">return</span> robot.weapon.ammo <span class="pl-k">&gt;</span> <span class="pl-c1">0</span>
+    <span class="pl-k">else</span>: 
+        <span class="pl-k">return</span> <span class="pl-k">not</span> robot.weapon.thatsNotAKnife <span class="pl-c"># this is a knife</span></pre></div>
+
+<p>The <code>isinstance</code> check tells mypy that <code>robot.weapon</code> is specifically a rifle, and therefore has an <code>ammo</code> field of type <code>int</code>. Without that check, we get a nifty error from mypy--and find out before testing, running, or deploying:</p>
+
+<div class="highlight highlight-source-python"><pre>foo.py: note: In function <span class="pl-s"><span class="pl-pds">"</span>canFight<span class="pl-pds">"</span></span>:
+foo.py:<span class="pl-c1">35</span>: error: Some element of union has no attribute <span class="pl-s"><span class="pl-pds">"</span>ammo<span class="pl-pds">"</span></span></pre></div>
+
+<p>Great! we've created an API that's clear, self-documenting, and compartively safe. We've provided some limited guarantees of correctness;
+and our domain is well-defined, which will help us reason about our past and future code moving forward.
+mypy is a growing project; it's still in an early stage and being actively developed. It's become an official
+part of they <a href="github.com/python">python</a> flock as the definitive optional typechecker; it's got the <a href="https://github.com/python/mypy/issues/1276#issuecomment-192981427">backing</a>
+and <a href="https://github.com/python/mypy/pull/1277">involvement</a> of <a href="https://en.wikipedia.org/wiki/Guido_van_Rossum">python's creator</a>.</p>
+
+<p>Although mypy is still in active development, it can be a profitable tool right now. It's not a compiler, and it never touches
+your code, so it can be used without much concern for bugs. It takes some extra time to annotate python with types--I've demonstrated
+some of the strengths of its type inference, but it's necessary to annotate some things like lambda expressions, for example.
+It's well worth the effort to document and verify your code in one way or another--mypy is another excellent tool for this purpose.</p>
+
+      <footer class="site-footer">
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
