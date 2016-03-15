@@ -14,6 +14,7 @@ def read_markdown(lines: Iterable[str]) -> Cell:
     if lines[0].startswith("```python"):
         codeLines, rest = splitby(lambda x: not x.startswith("```"), lines[1:])
         codeLines = list(codeLines)
+        codeLines[-1] = codeLines[-1].strip()
         rest = list(rest)[1:]
         res =  PythonBlock(codeLines)
     else:
