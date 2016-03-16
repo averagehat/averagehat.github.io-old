@@ -37,7 +37,7 @@ AttributeError                            Traceback (most recent call last)
 <ipython-input-3-662d1f2b981a> in <module>()
 ----> 1 foo.attribute
 ```
-
+python will . . . 
 ---
 
 Blow up all the time.
@@ -45,8 +45,6 @@ Blow up all the time.
 ---
 
 Dynamic typing is hard.
-
-You're domain is big . . . 
 
 ---
 
@@ -114,10 +112,15 @@ A program (data) can have a huge number of possible states.
 
 ```python
 from typing import * 
-List[float] # [1.0, 2.3]
+
+List[float]     # [1.0, 2.3]
+
 Tuple[int, str] # (1, "foo")
+
 Dict[str, bool] # {'a' : False}
+
 Callable[[List[int]],int] # lambda xs: sum(xs)/len(xs)
+
 NamedTuple("Point", [('x', int), ('y', int)]) # Point(x=1, y=3)
 ```
 
@@ -130,8 +133,16 @@ def add(x: int, y: int) -> int:
 
 A = TypeVar("A")
 B = TypeVar("B")
-def map(f: Callable[[A],B], List[A]) -> List[B]:
+def map(f: Callable[[A],B], xs: List[A]) -> List[B]:
   . . . .
+```
+
+---
+
+python 2
+```python
+def map(f, xs): # type: (Callable[[A],B], List[A]) -> List[B]
+   # could be down here
 ```
 
 ---
@@ -149,13 +160,18 @@ class Option(Generic[T]):
 "Free" type errors 
 
 ```python
-NamedTuple("Point", [('x', int), ('y', int)]) # Point(x=1, y=3)
-point = Point(1, 2)
+x = 12 
 
-point.x + "Eureka"
+x + "Eureka"
 error: Unsupported operand types for + ("float" and "str")
 ```
+
+---
+
+Local inference
+
 ```python
+point = Point(1, 3)
 x = point.x # mypy infers the type after assignment
 
 x > "Eureka"
@@ -222,7 +238,9 @@ It is a list AND another list AND a string.
 
 . . . plus its name, (constructor) which makes it its own type.
 
+
 --- 
+
 
 Invalid states!
 ```python 
@@ -281,8 +299,6 @@ def getColor(color: Color) -> int:
     else:  return 0x000
 ```
 
-sort of exhaustive! (elif requires else)
-
 ---
 
 Product Type
@@ -302,7 +318,7 @@ Sum Type
 
 ---
 
-###More complex types (ADTs)
+More complex types (ADTs)
 
 ```python
 Rifle = NamedTuple('Rifle', 
@@ -331,9 +347,7 @@ def canFight(robot: GiantRobot) -> bool:
         return robot.weapon.ammo > 0
     else: 
         return robot.weapon.isSharp
-```
-
-```python
+....
 #without `isinstance`: 
 note: In function "canFight":
   error: Some element of union has no attribute "ammo"
@@ -416,12 +430,6 @@ class SafePoint3D(Point3D, metaclass=Final)
 
 ---
 
-:(
-
-Whatever, python.
-
----
-
 ###Achieved (?)
 * Modelled our data
 * (some) Safety
@@ -430,7 +438,17 @@ Whatever, python.
     * function domains are smaller
     * code is easier to test
 
-There are definitely limitations.
+---
+
+Limitations
+* Less powerful than pattern matching
+    * attribute with same name and type
+    * non-exhaustive (so far)
+    * uglier
+* Implicit null (for now)
+* Subclassing kills safety (if your types allow it)
+* Python is mostly mutable
+* Not "idiomatic"
 
 ---
 
@@ -591,6 +609,7 @@ def test_union_is_either(self, t1, t2):
 ```
 
 --- 
+
 mypy-extras
 ```python
 @given(type_to_strat(Robot)):
@@ -715,8 +734,7 @@ def order_funcs(funcs: List[Callable[...,Any]], input: Union[File, Tuple[File,Fi
         if not optargs: return node
         assert len(optargs) == 1
         return partial(f, **{next(iter(optargs.keys())) :  None}) , _, optargs
-    filled_nodes = list(map(fill_opts, nodes))
-
+    filled_nodes = list(map(fill_opts, nodes)) 
 . . . .
 ```
 
@@ -727,14 +745,14 @@ def order_funcs(funcs: List[Callable[...,Any]], input: Union[File, Tuple[File,Fi
         if to_go == []: returnacc
         def is_satisfied(node: Node) -> bool:
             f, args, _ = node
-            required = keyfilter(lambda x: x != 'return', args) #rettype = args['return']
+            required = keyfilter(lambda x: x != 'return', args) 
             get_ret = lambda x: x[1]['return'] # type: Callable[[Node],type]
             acc_rets = map(get_ret, acc)
             acc_rets = list(acc_rets)
             satisfied = all([(t in acc_rets) for t in required.values()])
             return satisfied
-        nextnode = next(filter(is_satisfied, to_go))
-        next_to_go = list(filter(is_satisfied, to_go))[1:]
+        satisfied = list(filter(is_satisfied, to_go))
+        nextnode, next_to_go = satisfied[0], satisfied[1:]
         return top_sort([nextnode] + acc, next_to_go)
     sorted = top_sort([input], filled_nodes)
     return sorted
@@ -762,9 +780,9 @@ FailedDownload = NamedTuple("FailedDownload",
                           [('time', int),
                            ('url', Url)])
 
-MaybeFile = Union[TextFile, FailedDownload]
+PossibleDownload = Union[TextFile, FailedDownload]
 
-def download(url: Url) -> MaybeFile
+def download(url: Url) -> PossibleDownload
  
 def one_road(txt: TextFile) -> MoreFiles
 
