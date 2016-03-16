@@ -193,9 +193,9 @@ More type errors when you work for it.
 * Immutable
 * Easy
 
-
 ---
-###Product type!
+
+Product type!
 (think cartesian product)
 
 ```python
@@ -208,25 +208,29 @@ Point3D = NamedTuple("Point3D",
 Point3D = $ \mathbb{Z} \times \mathbb{Z} \times \mathbb{Z} $
 . . . with names.
 
-```python
+---
 
+```python 
 RobotLegs = NamedTuple("RobotLegs", 
                       [("leftLeg", List[Point3D]), 
                        ("rightLeg", List[Point3D]), 
                        ("color", str)])
 ```
-
----
-
 RobotLegs = List $\times$ List $\times$ str
+
 It is a list AND another list AND a string.
+
 . . . plus its name, (constructor) which makes it its own type.
 
-We've modelled our data, and that includes:
-
----
+--- 
 
 Invalid states!
+```python 
+RobotLegs = NamedTuple("RobotLegs", 
+                      [("leftLeg", List[Point3D]), 
+                       ("rightLeg", List[Point3D]), 
+                       ("color", str)])
+``` 
 * negative 3D coordinates
 * gibberish `color`
 * other stuff
@@ -257,11 +261,13 @@ SkyBlue = NamedTuple("SkyBlue", [])
 PastelRed = NamedTuple("PastelRed", [])
 White = NamedTuple("White", [])
 
-Color = Union[Blue, PastelRed, White] 
+Color = Union[SkyBlue, PastelRed, White] 
 ```
 Color = blue OR red OR white
 
-Color = $ blue \times red \times white $
+Color = $ blue \bigcup red \bigcup white $
+
+---
 
 ```python
 def getColor(color: Color) -> int:
@@ -285,7 +291,7 @@ $A \times B$
 
 $0 * 1$   (AND)
 
-
+---
 
 Sum Type 
 
@@ -310,11 +316,6 @@ Knife = NamedTuple('Knife',
 weapon = Union[Rifle, Knife]
 
 # note that RobotArms is also its own type.  
-RobotArms = NamedTuple("RobotArms", 
-                     [("leftArm", List[Point3D]), 
-                     ("rightArm", List[Point3D]), 
-                     ("color", Color)])
-
 GiantRobot = NamedTuple('GiantRobot', 
                       [('weapon', Weapon), 
                        ('legs' , RobotLegs),
@@ -331,9 +332,9 @@ def canFight(robot: GiantRobot) -> bool:
     else: 
         return robot.weapon.isSharp
 ```
-without `isinstance`:
 
-```python 
+```python
+#without `isinstance`: 
 note: In function "canFight":
   error: Some element of union has no attribute "ammo"
 ```
@@ -345,6 +346,8 @@ We want non-negative coordinates . . .
 type posInt = $\mathbb{N}$
 
 not possible. Instead . . . 
+
+---
 
 ```python
 class Point3D(object):
@@ -370,10 +373,10 @@ So . . .
 ---
 
 ```python
-class SafePoint3D(Point):
+class SafePoint3D(Point3D):
     def __new__(self, x: float, y: float, z: float) -> SafePoint3D:
         assert x >= 0 and y >= 0 and z >= 0
-        self = super(self, Point).__new__(self, (x, y, z))
+        self = super(self, Point3D).__new__(self, (x, y, z))
         return self
 ```
 
@@ -393,7 +396,8 @@ But...
 class NotSoSafePoint3D(SafePoint3D):
     def __new__(self, x: float, y: float, z: float) -> SafePoint3D:
         assert x != 0
-        return Point3D(x, y, z)
+        self = super(self, Point).__new__(self, (x, y, z))
+        return self
 ``` 
 Inheritance!
 
@@ -506,6 +510,7 @@ def run(url: Url, words: List[str], options: GrepTweetOptions) -> None:
 ```
 
 ---
+
 mypy-extras
 ```python
 # entry point
@@ -586,8 +591,7 @@ def test_union_is_either(self, t1, t2):
 ```
 
 --- 
-
-NamedTuples 
+mypy-extras
 ```python
 @given(type_to_strat(Robot)):
 test_robot_with_ammo_can_fight(self, robot):
@@ -605,11 +609,7 @@ test_legs_not_overlap_arms(self, robot):
 
 ---
 
-
----
-
-
-###Functions
+mypy-extras (Functions)
 
 ```python
 def mod_list(m: int, xs: List[int]) -> List[int]:
@@ -751,7 +751,7 @@ def build_pipeline(funcs: List[Callable[...,Any]], input) -> Callable[...,Any]:
 ```python
 #entry point
 funcs = [csv_to_json...]
-build_pipeline(funcs)(input)
+build_pipeline(funcs, input)()
 ```
 
 ---
