@@ -1,5 +1,14 @@
+__Mypy:  A New Hope?__
 
-### Some things with mypy: sum and product types
+
+
+---
+
+* I make commandline apps for biologists.
+* In python.
+
+---
+
 [A recent pep](https://www.python.org/dev/peps/pep-0484/) solidifies type annotations in python 2 and 3. These type annotations are compatible with python 2 & 3
 * ignored altogether
 * used however you wish in your own program, or 
@@ -61,7 +70,9 @@ Poor $f(x)$ just wants to do its job.
 
 But $x$ . . . 
 
-$ x \in \mathbb{Z} \bigcup \{'a','b'...\} \bigcup \{True,False} \bigcup \{ x* | x \in char \} \bigcup \{ None \} \bigcup object $
+---
+
+$ x \in \mathbb{Z} \bigcup \{'a','b'...\} \bigcup \{True,False} \bigcup \{ x* | x \in char \} \bigcup \{ None \} $ ...
 
 ---
 
@@ -92,6 +103,7 @@ A program (data) can have a huge number of possible states.
 * Unit testing cherry-picks form our program's possible states and makes sure they work.
 * Static typing limits the possible states of our program.
 
+---
 
 ###mypy
 * started as a statically-typed language with python sytax
@@ -134,52 +146,69 @@ class Option(Generic[T]):
 
 ---
 
-Free type-errors (at "compile time")
+"Free" type errors 
 
 ```python
 NamedTuple("Point", [('x', int), ('y', int)]) # Point(x=1, y=3)
 point = Point(1, 2)
 
 point.x + "Eureka"
-foo.py:10: error: Unsupported operand types for + ("float" and "str")
-
+error: Unsupported operand types for + ("float" and "str")
+```
+```python
 x = point.x # mypy infers the type after assignment
 
 x > "Eureka"
-foo.py:10: error: Unsupported operand types for > ("float" and "str")
+error: Unsupported operand types for > ("float" and "str")
 ```
 
 ---
+
+#Standard library
 
 ```python 
 map("not-a-function", [1, 2, 3])
 
-foo.py:7: error: Argument 1 to "map" has incompatible type "str"; expected Callable[[int], None]
+error: Argument 1 to "map" has incompatible type "str"; 
+expected Callable[[int], None]
 ```
 
 ---
 
+###Ducked Typing
 ```python
 len(3)
 
-foo.py:8: error: Argument 1 to "len" has incompatible type "int"; expected "Sized"
+error: Argument 1 to "len" has incompatible type "int";
+expected "Sized"
 ```
 
 ---
 
 More type errors when you work for it.
 
-`NamedTuples` (Product Type)
+---
+
+`NamedTuple` 
 * Immutable
 * Easy
 
+
 ---
+###Product type!
+(think cartesian product)
 
 ```python
 Point3D = NamedTuple("Point3D", 
-                    [("x", float), 
-                     ("y", float), 
-                     ("z", float)])
+                    [("x", int), 
+                     ("y", int), 
+                     ("z", int)])
+
+```
+Point3D = $ \mathbb{Z} \times \mathbb{Z} \times \mathbb{Z} $
+. . . with names.
+
+```python
 
 RobotLegs = NamedTuple("RobotLegs", 
                       [("leftLeg", List[Point3D]), 
@@ -189,9 +218,17 @@ RobotLegs = NamedTuple("RobotLegs",
 
 ---
 
+RobotLegs = List $\times$ List $\times$ str
+It is a list AND another list AND a string.
+. . . plus its name, (constructor) which makes it its own type.
+
+We've modelled our data, and that includes:
+
+---
+
 Invalid states!
-* gibberish `color`
 * negative 3D coordinates
+* gibberish `color`
 * other stuff
 
 ---
@@ -207,7 +244,7 @@ def getColor(legs: RobotLegs) -> int:
     else:
          . . . . 
 ```
-* What if we forget to check?
+(What if we forget to check?)
 
 The set of `str` is too big for `color` . . . 
 
@@ -220,39 +257,92 @@ SkyBlue = NamedTuple("SkyBlue", [])
 PastelRed = NamedTuple("PastelRed", [])
 White = NamedTuple("White", [])
 
-Color = Union[Blue, PastelRed, White]
-
-RobotLegs = NamedTuple("RobotLegs", 
-                     [("leftLeg", List[Point3D]),
-                      ("rightLeg", List[Point3D]), 
-                      ("color", Color)])
+Color = Union[Blue, PastelRed, White] 
 ```
+Color = blue OR red OR white
+
+Color = $ blue \times red \times white $
 
 ```python
-def getColor(legs: RobotLegs) -> int:
-    colorsToInts = { SkyBlue() : 0x87CEFA }
-    return colorsToInts.get(legs.color)
+def getColor(color: Color) -> int:
+
+    if isinstance(color, SkyBlue): 
+        return 0x87CEFA
+
+    elif isinstance(color, PastelRed): 
+        return 0x9F89
+
+    else:  return 0x000
 ```
+
+sort of exhaustive! (elif requires else)
 
 ---
 
-NamedTuple = Product Type
+Product Type
 
 $A \times B$
 
-$0 * 1$ (and)
+$0 * 1$   (AND)
 
-Union  =  Sum Type 
+
+
+Sum Type 
 
 * $A \bigcup B$
 
-* $0 + 1$ (or)
+* $0 + 1$   (OR)
+
 
 ---
 
-Back to our robots. We want non-negative coordinates . . . 
+###More complex types (ADTs)
 
-posint = $\mathbb{N}$
+```python
+Rifle = NamedTuple('Rifle', 
+                   [('ammo' , int), 
+                    ('model' , str)])
+
+Knife = NamedTuple('Knife', 
+                 [('shape' , List[Point3D]), 
+                  ('isSharp', bool)])
+
+weapon = Union[Rifle, Knife]
+
+# note that RobotArms is also its own type.  
+RobotArms = NamedTuple("RobotArms", 
+                     [("leftArm", List[Point3D]), 
+                     ("rightArm", List[Point3D]), 
+                     ("color", Color)])
+
+GiantRobot = NamedTuple('GiantRobot', 
+                      [('weapon', Weapon), 
+                       ('legs' , RobotLegs),
+                       ('arms', RobotArms)])
+```
+
+---
+
+###Dispatch union types
+```python
+def canFight(robot: GiantRobot) -> bool:
+    if isinstance(robot.weapon, Rifle): # type inference happens here
+        return robot.weapon.ammo > 0
+    else: 
+        return robot.weapon.isSharp
+```
+without `isinstance`:
+
+```python 
+note: In function "canFight":
+  error: Some element of union has no attribute "ammo"
+```
+
+---
+
+We want non-negative coordinates . . . 
+
+type posInt = $\mathbb{N}$
 
 not possible. Instead . . . 
 
@@ -280,11 +370,20 @@ So . . .
 ---
 
 ```python
-class SafePoint3D(object):
+class SafePoint3D(Point):
     def __new__(self, x: float, y: float, z: float) -> SafePoint3D:
         assert x >= 0 and y >= 0 and z >= 0
-        return Point3D(x, y, z)
+        self = super(self, Point).__new__(self, (x, y, z))
+        return self
 ```
+
+---
+
+* We know where a `SafePoint3D` comes from
+* We limited the size of the set
+* Functions which accept `SafePoint3D` are guaranteed that it will represent a valid state 
+
+---
 
 But... 
 
@@ -304,111 +403,385 @@ So . . .
 
 ```python
 from typing import Final
-class SafePoint3D(Final, object):
+class SafePoint3D(Point3D, metaclass=Final)
    # etc.
 ```
-* We know where a `SafePoint3D` comes from
-* We limited the size of the set
-* Functions which accept `SafePoint3D` are guaranteed that it will represent a valid state 
+* throws a runtime error if you try to subclass `SafePoint3D`.
+
+* *Still* possible to circumvent this
 
 ---
 
-###More complex types (ADTs)
+:(
 
-```python
-Rifle = NamedTuple('Rifle', 
-                   [('ammo' , int), 
-                    ('model' , str)])
-
-Knife = NamedTuple('Knife', 
-                 [('shape' , List[SafePoint3D]), 
-                  ('isSharp', bool)])
-
-weapon = Union[Rifle, Knife]
-
-# note that RobotArms is also its own type.  
-RobotArms = NamedTuple("RobotArms", 
-                     [("leftArm", List[SafePoint3D]), 
-                     ("rightArm", List[SafePoint3D]), 
-                     ("color", Color)])
-
-GiantRobot = NamedTuple('GiantRobot', 
-                      [('weapon', Weapon), 
-                       ('legs' , RobotLegs),
-                       ('arms', RobotArms)])
-```
+Whatever, python.
 
 ---
 
-###Dispatch union types
-```python
-def canFight(robot: GiantRobot) -> bool:
-    if isinstance(robot.weapon, Rifle): # type inference happens here
-        return robot.weapon.ammo > 0
-    else: 
-        return robot.weapon.isSharp
-```
-without `isinstance`....  
-
-```python
-foo.py: note: In function "canFight":
-foo.py:35: error: Some element of union has no attribute "ammo"
-```
-
----
-
-###Achieved
-* Safety
+###Achieved (?)
+* Modelled our data
+* (some) Safety
 * Documentation
 * Separated validation code: 
     * function domains are smaller
     * code is easier to test
 
+There are definitely limitations.
+
 ---
 
-We really want to make it is easy on ourselves and be *really really sure* that we only have to validate our input once. We can do all the validation--cleaning up data from I/O, verifying it matches a certain shape, creating errors etc.--when we construct the instances of our types. That way all functions which accept those types are relieved from the obligation of checking themselves.
+###Fun things
 
+* Commandline dispatch
+* testing
+* declarative pipelines
 
-mypy supports generics. A generic can be a lot of things; A `list`, an `Iterable`, or something equivalent to scala/java 8's `Option` type. If a generic is a collection, all elements of the collection must be of the same type. mypy comes equipped with a number of generic types; take for example `List`, which is an alias for the built-in `list`.
+---
+
+docopt
+
+```python
+"""
+Usage:
+     grep_tweets <url> <words>... [ --ignore-case ] [ -n <count> ] --output <output> 
+Options:
+    --output=<output>         output file
+    -n=<count>                number of tweets
+"""
+```
+
+---
+
+docopt
+```
+def run(url, count, output, ignore_case):
+    . . . 
+
+scheme = Schema({ 'url' : is_url,
+      '-n' : Use(int),
+      '--ignore-case' : lambda _: True,
+      '--output' : lambda _: True,
+      'words' : lambda _: True }
+# entry point
+raw_args = docopt(__doc__, version='Version 1.0')
+args = scheme.validate(raw_args) 
+. . . 
+run(args['--url'], args['words'], args['-n'], args['--output'], args['--ignore-case'])
+```
+
+---
+
+Argparse
+
+```python
+parser = argparse.ArgumentParser()
+parser.add_argument('url') 
+parser.add_argument('words', nargs='+') 
+parser.add_argument('-n', type=int)
+parser.add_argument('--output', required=True)
+parser.add_argument('--ignore-case', 
+                    action='store_true', default=False)
+# entry point
+args = parser.parse_args() 
+
+. . . 
+run(args.url, args.words, args.n, arg.output, args.ingore_case)
+```
+
+---
+
+mypy-extras
+```python
+from path import Path 
+class Url . . .  
+
+GrepTweetOptions = \
+     NamedTuple("GrepTweetOptions",
+              [('n', Optional[int]),
+               ('output', Path),
+               ('ignore_case', bool)])
+
+def run(url: Url, words: List[str], options: GrepTweetOptions) -> None:
+    . . . 
+```
+
+---
+mypy-extras
+```python
+# entry point
+args = dispatch_from_type(run)
+run(**args)
+```
+
+---
+
+* Most of the code is types.
+* (types are good).
+* Validation happens in one place.
+* Validation is guaranteed.
+* Our `run` function is always synced with our user interface.
+
+---
+
+How can we achieve this?
+
+A type is a Tree with different kinds of branches.
+
+* `Union` is one kind of branch.
+* `NamedTuple` is another kind.
+* etc. . . . 
+
+use `argparse` to fill in the parsing and usage (or not)
+
+---
+
 ```python 
-ListOfInts = List[int]
+def type_to_argparse(t: type, p: ArgumentParser) -> Dict[str,Any]:
+   primitives  = [int, str, float, unicode, bytes]
+
+   if t == bool:
+        return dict(action='store_true')
+
+   elif t in primitives: 
+       return dict(type=t)
+
+   elif is_enum(t):
+       raise ValueError("Enum types not allowed outside of Union.")
+
+   elif is_namedtuple(t):
+       for name, typ in t._field_types.items():
+           d = type_to_argparse(typ, p)
+           if 'required' not in d and d.get('action') != 'store_true':
+               d['required'] = True
+           p.add_argument('--'+name, **d) 
+
+. . . etc.
 ```
 
-You can also create types by subclassing `Generic`.
+---
+
+todo: mutually exclusive arguments?
+
+---
+
+###Testing
+
 ```python
-class Option(Generic[T]):
-    def getOrElse(t: T) -> T:
-       . . . 
-```
-It's possible to use multiple type variables within a generic:
-```python
-E = TypeVar("E")
-V = TypeVar("V")
-class Either(Generic[E,V]):
-    . . . . 
-```
+In [0]: !pip install hypothesis
+In [1]: from hypothesis import strategies as st
+In [2]: st.integers().example()
 
-Let's use `List` and `3DPoint` to create a more complex product type: `Robot Legs`.
+    1070630604996546757468194856009676754204344532158L
+```
+strings, dictionaries, lists, etc.
+
+---
 
 ```python
-RobotLegs = NamedTuple("RobotLegs", [("leftLeg", List[Point3D]), ("rightLeg", List[Point3D]), ("color", str)])
+@given(atype, atype)
+def test_union_is_either(self, t1, t2):
+    union = Union[t1, t2]
+    self.assertIsInstance(t1, union)
+    self.assertIsInstance(t2, union)
 ```
-Note that we've defined the field `color` as simply a string, allowing us to create robot legs with nonsense colors. It's also possible to create robot legs with negative integers for coordinates! We only want pastel colors, and robots which exist in the cartesian plane. 
-In fact it's possible to use this technique to *guarantee* that our function will only ever get valid input. It's only possible to construct the sum type of `RobotLegs` through the union type of `Color`; `Color` is by definition one of `Blue`, `Red`. . . and points
-In languages with the concept of private constructors, it's possible to *guarantee* that a RobotLegs cannot be created an invalid state--and therefore that `getColor` can never be passed invalid data--by making the `RobotLegs` constructor private. Unfortunately, we can only document the `make3DCoordinates` function as the point of entry for our API--we can't exclude the constructor as private.
 
-Note that the assurance offered by static typing is significantly stronger than the contract offered by ducked typing. If we simply accepted an object with `leftLeg` `rightLeg` and `color` as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type!
+--- 
 
-`Color` is a very simple Union type, analogous to the "Enums" of other languages (including python 3), while providing additional safety. Bution union types are more powerful; it's possible to create a union type out of product types, and model arbitrary complex 
-systems this way. You can think of these types as representing the "set of all possible inputs and outputs" and functions accepting these types as representing the "cobminators" or "all the things I can ever do with my inputs". Together, these form a sort of "algebra" that represents your domain. In the domain of giant robots:
+NamedTuples 
+```python
+@given(type_to_strat(Robot)):
+test_robot_with_ammo_can_fight(self, robot):
+    assume(isinstance(robot.weapon, Rifle))
+    assume(robot.weapon.ammo != 0)
+    self.assertTrue(canFight(robot))
 
-Great! we've created an API that's clear, self-documenting, and compartively safe. We've provided some limited guarantees of correctness;
-and our domain is well-defined, which will help us reason about our past and future code moving forward.
-mypy is a growing project; it's still in an early stage and being actively developed. It's become an official
-part of they [python](github.com/python) flock as the definitive optional typechecker; it's got the [backing](https://github.com/python/mypy/issues/1276#issuecomment-192981427)
-and [involvement](https://github.com/python/mypy/pull/1277) of [python's creator](https://en.wikipedia.org/wiki/Guido_van_Rossum).
+@given(type_to_strat(Robot)):
+test_legs_not_overlap_arms(self, robot):
+    self.assertNotEqual(robot.legs, robot.arms)
+```
+* If we change legs, the ammo test won't break.
+* "Exhaustive" testing (sort of)
+*  $\| bool \times Color \| = 8$
 
-Although mypy is still in active development, it can be a profitable tool right now. It's not a compiler, and it never touches
-your code, so it can be used without much concern for bugs. It takes some extra time to annotate python with types--I've demonstrated
-some of the strengths of its type inference, but it's necessary to annotate some things like lambda expressions, for example.
-It's well worth the effort to document and verify your code in one way or another--mypy is another excellent tool for this purpose.
+---
+
+
+---
+
+
+###Functions
+
+```python
+def mod_list(m: int, xs: List[int]) -> List[int]:
+    return list(map(lambda x: x % m, xs))
+
+my_func_strategy = func_strategy(example_func)
+
+@given(my_func_strategy)
+def test_example_func(self, args):
+    assume(args['m'] > 0)
+    result = mod_list(**args)
+    less_than_m = map(lambda x: x < args['m'], result)
+    self.assertTrue(all(less_than_m))
+``` 
+
+---
+
+```make
+
+sorted.json: sorted.csv
+   . . . . 
+sorted.csv: grepped.txt
+   . . . . 
+
+grepped.txt: foo.txt
+   grep "(she|her|girl|female|woman)" $< > $@
+
+foo.txt: 
+   wget $(URL)
+```   
+   
+---
+
+
+```python
+class TextFile(Path): pass 
+. . .
+
+def download(url: Url) -> TextFile
+
+def to_csv(lines: List[str]) -> CSV
+
+def grep(txt: TextFile) -> List[str]
+
+def csv_to_json(csv: CSV) -> JSON
+
+```
+
+---
+
+```python
+#entry point
+to_json( to_csv( grep( download( url) ) ) ) 
+```
+
+Typechecks!
+
+Or . . . 
+
+---
+
+A -> B 
+
+B -> C
+
+C -> D
+
+given $x \in A$ and wanting $D$:
+
+A -> B -> C -> D
+
+---
+
+```python
+class TextFile(Path): pass 
+. . .
+
+def download(url: Url) -> TextFile
+
+def to_csv(lines: List[str]) -> CSV
+
+def grep(txt: TextFile) -> List[str]
+
+def csv_to_json(csv: CSV) -> JSON 
+```
+given a url as input . . . 
+
+url -> TextFile -> List[str] -> CSV -> JSON
+
+---
+
+```python
+def get_pos_opt_args(func: Callable[...,Any]) -> Node:
+    annotations = func.__annotations__
+    is_opt = lambda x: x[0] == 'opts' # type: Callable[[Tuple[str,type]], bool]
+    pos_args, opt_args = partition(is_opt, annotations.items()) 
+    return func, dict(pos_args), dict(opt_args)
+
+def order_funcs(funcs: List[Callable[...,Any]], input: Union[File, Tuple[File,File]]) -> List[Node]:
+    nodes = map(get_pos_opt_args, funcs)
+    def fill_opts(node: Node) -> Callable[...,Any]:
+        f, _, optargs = node
+        if not optargs: return node
+        assert len(optargs) == 1
+        return partial(f, **{next(iter(optargs.keys())) :  None}) , _, optargs
+    filled_nodes = list(map(fill_opts, nodes))
+
+. . . .
+```
+
+---
+
+```python
+    def top_sort(acc: List[Node], to_go: List[Node]) -> List[Node]:
+        if to_go == []: returnacc
+        def is_satisfied(node: Node) -> bool:
+            f, args, _ = node
+            required = keyfilter(lambda x: x != 'return', args) #rettype = args['return']
+            get_ret = lambda x: x[1]['return'] # type: Callable[[Node],type]
+            acc_rets = map(get_ret, acc)
+            acc_rets = list(acc_rets)
+            satisfied = all([(t in acc_rets) for t in required.values()])
+            return satisfied
+        nextnode = next(filter(is_satisfied, to_go))
+        next_to_go = list(filter(is_satisfied, to_go))[1:]
+        return top_sort([nextnode] + acc, next_to_go)
+    sorted = top_sort([input], filled_nodes)
+    return sorted
+```
+```python
+def build_pipeline(funcs: List[Callable[...,Any]], input) -> Callable[...,Any]:
+    nodes = order_funcs(funcs, input)
+    ordered_funcs = map(get(0), nodes)
+    return reduce(compose, ordered_funcs)
+```
+
+---
+
+```python
+#entry point
+funcs = [csv_to_json...]
+build_pipeline(funcs)(input)
+```
+
+---
+
+Branching with Error (or whatever) unions
+```python
+FailedDownload = NamedTuple("FailedDownload",
+                          [('time', int),
+                           ('url', Url)])
+
+MaybeFile = Union[TextFile, FailedDownload]
+
+def download(url: Url) -> MaybeFile
+ 
+def one_road(txt: TextFile) -> MoreFiles
+
+def another_road(fd: FailedDownload) -> SomethingElseEntirely 
+```
+
+---
+
+* Declarative, like `Make` (but more powerful?)
+
+* *Not* typesafe
+
+---
+
+###Questions?
+
+[@__averagehat](https://twitter.com/__averagehat)
+
+[github.com/averagehat/mypy-extras/](https://github.com/averagehat/mypy-extras/)
+
