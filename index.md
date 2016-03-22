@@ -1,5 +1,6 @@
 ---
-title: Document Center
+layout: post
+title: Blogging Like a Hacker
 ---
 
 ### Some things with mypy: sum and product types
