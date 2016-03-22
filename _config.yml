@@ -5,3 +5,4 @@
  gems:
    - jekyll-coffeescript
    - jekyll-paginate
+highlighter: rouge
