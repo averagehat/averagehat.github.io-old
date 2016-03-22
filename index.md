@@ -1,6 +1,7 @@
 ---
 title: Document Center
 ---
+
 ### Some things with mypy: sum and product types
 [A recent pep](https://www.python.org/dev/peps/pep-0484/) solidifies type annotations in python 2 and 3. These type annotations are compatible with current versions of python. 
 They can be ignored altogether, used however you wish in your own program, or used to typecheck your code with [mypy](github.com/python/mypyp).
