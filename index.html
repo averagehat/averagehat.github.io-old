@@ -1,211 +1,23 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>Vim Script 101 by averagehat</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">Vim Script 101</h1>
-      <h2 class="project-tagline"></h2>
-    </section>
+<html>
+<head></head>
+
+<body>
+<b> Website of Michael Panciera. <b>
+<p> Contact: <a href="https://twitter.com/__averagehat"> @__averaeghat </a> </p>
+<p> Projects: <a href="https://github.com/averagehat/"> on github </a> </p>
+<br/>
+<br/>
+<p> Functional Programming </p>
+<ul>
+    <li> <a href="/mypy_basics.html"> Sum and Product types with mypy </a> </li>
+    <li> <a href="/biofp.html"> Higher-order functions in python with lists </a> </li>
+</ul>
+<p> Old stuff </p>
+<ul>
+    <li> <a href="/vimLtutorial.html"> An introduction to the Vim scripting language </a> </li>
+    <li> <a href="/penlab.html"> Setting up a penetration-testing lab on linux </a> </li>
+    <li> <a href="/csv.html"> CSV parsing with pandas </a> </li>
+</ul>
+</body>
 
-    <section class="main-content">
-      <p>I'm currently working on <a href="https://github.com/averagehat/phonim-jython">a plugin for vim</a>. Along the way I've discovered a lot of intersting and useful productivity tricks. </p>
-
-<h3>
-<a id="defining-functions" class="anchor" href="#defining-functions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Defining functions</h3>
-
-<div class="highlight highlight-source-viml"><pre>   <span class="pl-k">fun</span>! <span class="pl-c1">Foo</span>()
-<span class="pl-c">   " function body</span>
-   <span class="pl-k">endfun</span>
-
-   <span class="pl-k">function</span> <span class="pl-en">Foo</span>()
-<span class="pl-c">   " function body</span>
-   <span class="pl-k">endfunction</span></pre></div>
-
-<p>Create functions within the command window by putting each statement on a new line. i.e.</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-k">fun</span>! <span class="pl-c1">Foo</span>() [<span class="pl-c1">&lt;CR&gt;</span>]
-   :  second line
-   : <span class="pl-k">.</span> <span class="pl-k">.</span> <span class="pl-k">.</span> <span class="pl-k">.</span> <span class="pl-k">.</span> </pre></div>
-
-<p>Execute them from the commandline window:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :call <span class="pl-c1">Foo</span>()</pre></div>
-
-<p>Variables have several possible scopes:
-<code>l</code> (local to function), <code>s</code> (local to individual scripts/files), <code>g</code> (global), <code>a</code> (a function parameter). </p>
-
-<p><code>v</code> is a global like <code>g</code>, but has been predefined by vim. These cannot be defined by the user.</p>
-
-<p><code>b</code> (local to current buffer), <code>w</code> (local to the current winow) and <code>t</code> (local to current tab)  are less often used.</p>
-
-<p>View defined variables:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">let</span> <span class="pl-smi">g:</span>  <span class="pl-c">"or v:, b:, etcl</span></pre></div>
-
-<p>By the way, we can use <code>"</code> for comments</p>
-
-<p>View register contents:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :reg</pre></div>
-
-<p>Variables are defined using let, e.g.:</p>
-
-<div class="highlight highlight-source-viml"><pre> <span class="pl-c1">let</span> <span class="pl-smi">l:bar</span> = <span class="pl-s">"red"</span></pre></div>
-
-<p>Variables defined or accessed within a function are by default in the local scope. Prepending with <code>g:</code> allows access to global variables.</p>
-
-<p>Arrays are much like python lists. They are type-agnostic and can be sliced.</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">let</span> <span class="pl-smi">l:a</span> = [<span class="pl-c1">1</span>, <span class="pl-c1">2</span>, <span class="pl-s">'foo'</span>, <span class="pl-s">'bar'</span>]
-   :<span class="pl-c1">echo</span> a[<span class="pl-c1">2</span>:<span class="pl-c1">-1</span>]` <span class="pl-c">"prints ['foo', 'bar']</span></pre></div>
-
-<p>Strings can also be sliced withe same syntax.</p>
-
-<p>String concatenation is php style:</p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-c1">let</span> <span class="pl-smi">g:pair</span> = <span class="pl-s">'eight'</span> <span class="pl-k">.</span> <span class="pl-s">'eight'</span></pre></div>
-
-<p>Directly access the command line:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :!<span class="pl-c1">echo</span> -e <span class="pl-s">"bash\nis\nfun"</span> | cat &gt; bar<span class="pl-k">.</span>txt </pre></div>
-
-<p>Read files into the buffer:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :r bar<span class="pl-k">.</span>txt</pre></div>
-
-<p>Produces:</p>
-
-<pre><code>bash
-is
-fun
-</code></pre>
-
-<p>Under your cursor.</p>
-
-<p>Read command outputs into the buffer:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :r !curl -s icanhazip<span class="pl-k">.</span>com</pre></div>
-
-<p>If your distribution of vim is compiled with python included (and it usually is) you can also access a python interpreter during your editing session.</p>
-
-<div class="highlight highlight-source-python"><pre>   :py <span class="pl-c1">print</span> <span class="pl-s"><span class="pl-pds">"</span>ni!<span class="pl-pds">"</span></span></pre></div>
-
-<p>You can access vim from the internal python interpreter.</p>
-
-<div class="highlight highlight-source-python"><pre>   :py <span class="pl-k">import</span> vim
-   :py vim.current.buffer[<span class="pl-c1">0</span>] <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Just answer the five (three!) questions<span class="pl-pds">'</span></span></pre></div>
-
-<p>You can go crazy with it if you like . . . </p>
-
-<div class="highlight highlight-source-python"><pre>   :py <span class="pl-k">import</span> requests, lxml.etree
-   :root <span class="pl-k">=</span> lxml.etree.HTML(requests.get(<span class="pl-s"><span class="pl-pds">'</span>https://twitter.com/montypython<span class="pl-pds">'</span></span>).text)
-   :redir <span class="pl-k">@</span>i<span class="pl-k">|</span> exe <span class="pl-s"><span class="pl-pds">'</span>:silent py for t in  root.xpath("//p[contains(@class, <span class="pl-cce">\"</span>ProfileTweet-text<span class="pl-cce">\"</span>)]/text()"): print t.encode("utf8")<span class="pl-pds">'</span></span> <span class="pl-k">|</span> redir <span class="pl-c1">END</span> <span class="pl-k">|</span> <span class="pl-ii">$</span>put i</pre></div>
-
-<p>Here, <code>:redir</code> redirects output of the commands between <code>:redir</code> and <code>:redir END</code> (which would usually be printed in the command window) to some register. Vim has 26+ register (all alphabetical letters and additional reserved registers). <code>@i</code> accesses the value at register <code>i</code>, telling vim to pipe output there. <code>|</code> stands in place of <code>&lt;CR&gt;</code> to separate commands. <code>exe</code> executes the given command as if it were in the command. We can use it when we need to make a command out of concatenating strings. In this case, it lets us wrap the python code in '' so that python does not try to interpret the next <code>|</code>. <code>silent</code> tells vim not to echo the result of the command in the command window. <code>redir END</code> will populate our register <code>i</code> -- it won't get updated until the redirect is finished. Finally, we execute <code>put i</code>, which inserts the contents of register <code>i</code> after the cursor's current line. The <code>$</code> (which generally indecates "last") tells put to instead append to the last line of the buffer.</p>
-
-<p>There are some useful global variables</p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-smi">v:statusmsg</span>    <span class="pl-c">"usually holds the last item shown in the command window      </span>
-<span class="pl-smi">v:warningmsg</span>   e<span class="pl-k">.</span>g<span class="pl-k">.</span> W<span class="pl-c1">10</span>: Warnin<span class="pl-smi">g:</span> Changing a readonly file
-<span class="pl-smi">v:errmsg</span>       e<span class="pl-k">.</span>g<span class="pl-k">.</span> E<span class="pl-c1">488</span>: Trailing character<span class="pl-smi">s:</span> put <span class="pl-smi">v:errmsg</span></pre></div>
-
-<p>Useful Motions (normal mode)</p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-c1">command</span>    goes to
-`f<span class="pl-c1">&lt;char&gt;</span>` next instance of <span class="pl-c1">&lt;char&gt;</span>
-`)`       <span class="pl-k">end</span> of setnece
-`<span class="pl-k">%</span>`       matching parens/brace
-`$`       <span class="pl-k">end</span> of line
-`G`       <span class="pl-k">end</span> of file
-`}`       next paragraph</pre></div>
-
-<p>Additionally, we have <code>visual</code> mode. A quick preview of that:  </p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-c1">&lt;C-v&gt;</span>  <span class="pl-c">"To select columns. Any change propagates to all columns.</span>
-   :vs [filename] <span class="pl-c">"split vertical window</span>
-   :split [filename] <span class="pl-c">"split horizontally</span></pre></div>
-
-<p><code>&lt;C-w&gt;</code> Is the window command suffix, so <code>&lt;C-w&gt; h</code> moves to the left widnow, <code>&lt;C-w&gt; l</code> to the right, <code>&lt;C-w&gt; k</code> moves to the upper window and <code>&lt;C-w&gt; j</code> moves to the lower one. I have the following mapping which forces this to work straight out of insert mode:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">inoremap</span> <span class="pl-c1">&lt;C-w&gt;</span> <span class="pl-c1">&lt;Esc&gt;</span> <span class="pl-c1">&lt;C-w&gt;</span></pre></div>
-
-<p><code>&lt;Esc&gt;</code> exits to nromal mode. So does <code>&lt;C-[&gt;</code>; we can map the tab key to do it as well:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">imap</span> <span class="pl-c1">&lt;tab&gt;</span> <span class="pl-c1">&lt;Esc&gt;</span></pre></div>
-
-<p>So what can we do with all this? Well, we have lots of useful variables, lots of registers, and marks, and even <a href="http://vimdoc.sourceforge.net/htmldoc/netbeans.html"> communication protocol for controlling external processes</a>. My next post will be about the project that most of this study has been devoted to. For now, I'll go over a few of my personal settings and one trick that is a bit obscure but extremely powerful.</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">noremap</span> <span class="pl-c1">&lt;C-d&gt;</span> :call <span class="pl-c1">search</span>(<span class="pl-s">'def\s\s*('</span> <span class="pl-k">.</span> <span class="pl-c1">expand</span>(<span class="pl-s">'&lt;cword&gt;'</span>)) <span class="pl-c1">&lt;CR&gt;</span></pre></div>
-
-<p>The <code>search</code> function takes a string (remember that <code>.</code> performs string concatenation), searches the buffer for the regular expression, and moves the cursor to the the line of the found string. <code>search</code> returns the line of the found match, or <code>0</code> if no match was found (vim counts its buffer line from <code>1</code>). <code>&lt;cword&gt;</code> is an "Ex special character" (try <code>:h cmdline-special</code>). The <code>expand</code> function returns the special meaning of <code>&lt;cword&gt;</code>, which happens to be the current word under the cursor. So if the word under my cursor is "print_lines", search will be called on <code>def\s+print_line(</code>. So this obscure little function will take you to the function definiton of whatever function you're currently hovering over. IF it's in the file. But what if it's not? Let's try a function. </p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-k">fun</span>! <span class="pl-c1">DefSearch</span>()
-  <span class="pl-c1">let</span> <span class="pl-smi">l:regex</span> = <span class="pl-s">'def\s\s*('</span> <span class="pl-k">.</span> <span class="pl-c1">expand</span>(<span class="pl-s">'&lt;cword&gt;'</span>)
-  <span class="pl-k">if</span> <span class="pl-c1">search</span>(regex) <span class="pl-k">==</span> <span class="pl-c1">0</span>   <span class="pl-c">" search failed</span>
-    silent <span class="pl-s">'grep -E "'</span>  <span class="pl-k">.</span> regex <span class="pl-k">.</span> <span class="pl-s">'" *.py'</span>
-  <span class="pl-k">endif</span>
-<span class="pl-k">endfun</span></pre></div>
-
-<p>VimL's functions execute their code as if from the command-line (in vim, as if you prepended them with <code>:</code>). So <code>silent</code> <code>executes</code> the following command without echoing in the command window. It then execute's vim's built-in grep (which is a wrapper around bash's grep). grep's <code>E</code> allows you to use quote-wrapped regular expressions; -r forces a recursive search, if you like it. <code>*.py</code> will match any python files. Let's map it!
-Food()</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">noremap</span> <span class="pl-c1">&lt;C-d&gt;</span> :call <span class="pl-c1">DefSearch</span>() <span class="pl-c1">&lt;CR&gt;</span></pre></div>
-
-<p>But it's only useful if we're editing or reading a python file . . . we probably don't want to use it otherwise. So in the <code>.vimrc</code> file, we add:</p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-c1">au</span> BufREadPost <span class="pl-k">*.</span>py :<span class="pl-c1">noremap</span> <span class="pl-c1">&lt;C-d&gt;</span> :call <span class="pl-c1">DefSearch</span>() <span class="pl-c1">&lt;CR&gt;</span></pre></div>
-
-<p>Testing all this can be a bit of a drag, but as we are editing a vim script (or our .vimrc file) we can immmediately run it (and gain access to its globally-declared variables and functions) by calling <code>:source</code>. We can take advantage of anther "cmd-line-special" <code>%</code>, which in the command-line has the value of the current buffer name.</p>
-
-<div class="highlight highlight-source-viml"><pre>   :source <span class="pl-k">%</span></pre></div>
-
-<p>Okay, one last trick. This one is real nifty. Info on it is in vim's extensive in-house documentation--just try <code>:h g@</code>. This trick allows you to capture user motions and reference them within a function. We do this by setting an 'operatorfunc' option. The result is a custom operator. Given a function Foo:</p>
-
-<div class="highlight highlight-source-viml"><pre>   :<span class="pl-c1">nmap</span> <span class="pl-c1">&lt;silent&gt;</span> <span class="pl-c1">&lt;F4&gt;</span> :<span class="pl-c1">set</span> opfunc=Echo<span class="pl-c1">&lt;CR&gt;</span>g<span class="pl-smi">@</span>
-   :<span class="pl-c1">vmap</span> <span class="pl-c1">&lt;silent&gt;</span> <span class="pl-c1">&lt;F4&gt;</span> :<span class="pl-c1">&lt;C-U&gt;</span>call <span class="pl-c1">Echo</span>(<span class="pl-c1">visualmode</span>(), <span class="pl-c1">1</span>)<span class="pl-c1">&lt;CR&gt;</span></pre></div>
-
-<p>Note: <code>:vmap</code> is the equivalent of <code>:nmap</code> for visual mode. The function defition:</p>
-
-<div class="highlight highlight-source-viml"><pre><span class="pl-c">" uses [/] marks along with visual mode to yank a custom selection of text.</span>
-<span class="pl-k">fun</span>! <span class="pl-c1">Echo</span>(type, <span class="pl-k">...</span>)
-<span class="pl-c">  "backticks=' (goto mark), have to avoid out-quoting string</span>
-<span class="pl-c">  "clear the @q register for use in this function.</span>
-<span class="pl-c">  "@q is the reserved phonim register.</span>
-  <span class="pl-c1">let</span> <span class="pl-smi">@q</span>=<span class="pl-s">""</span>
-<span class="pl-c">  " see :h g@ for more info and how to save and restore a register, which</span>
-<span class="pl-c">  " would allow us to use 'q' only temporarily and then restore it </span>
-  <span class="pl-k">if</span> <span class="pl-smi">a:0</span>  <span class="pl-c">" Invoked from Visual mode, use '&lt; and '&gt; marks.</span>
-    silent <span class="pl-c1">exe</span> <span class="pl-s">"normal! `&lt;"</span> <span class="pl-k">.</span> <span class="pl-smi">a:type</span> <span class="pl-k">.</span> <span class="pl-s">'`&gt;"qy'</span>
-  <span class="pl-k">elseif</span> <span class="pl-smi">a:type</span> <span class="pl-k">==</span> <span class="pl-s">'line'</span>
-    silent <span class="pl-c1">exe</span> <span class="pl-s">'normal! `[V`]"qy'</span>
-  <span class="pl-k">elseif</span> <span class="pl-smi">a:type</span> <span class="pl-k">==</span> <span class="pl-s">'block'</span> <span class="pl-c">" column ('block') selection. </span>
-    silent <span class="pl-c1">exe</span> <span class="pl-s">'normal! `[\&lt;C-V&gt;`]"qy'</span>
-<span class="pl-c">  "v -&gt; visual mode but stay in-line</span>
-  <span class="pl-k">else</span> <span class="pl-c">" Stay in-line</span>
-    silent <span class="pl-c1">exe</span> <span class="pl-s">'normal! `[v`]"qy'</span>  
-  <span class="pl-k">endif</span>
-  <span class="pl-c1">echo</span> <span class="pl-smi">@q</span>
-<span class="pl-k">endfun</span></pre></div>
-
-<p>This function echos into the command-window any text that the user selects. It saves the user's selection in the <code>q</code> register (could be any letter). It is possible to store and restore this register so as not to lose its original contents.  Now <code>:normal</code> executes normal-mode commands, and will use any mappings that we defined by <code>nmap</code>. <code>:normal!</code> overrides this use of mapping.  The <code>opfunc</code> works by setting <code>[</code> and <code>]</code> marks to the beginning and end of the user motiton (i.e. to the next whitespace if it is <code>W</code> or the next like if it is <code>j</code>). The <code>Echo</code> function simply yanks the text between these two marks and stores them in the <code>q</code> register. We can then do whatever we like with the text, in this case echo it. The if statements gaurantee that the selection will work the same in visual and normal mode (<code>v</code> is for inline visual selection; <code>V</code> is for column or "block" selection). </p>
-
-<p>In my next post I'll talk about an interesting application of this last technique--and VimL in general, and the reasoning behind all this research.</p>
-
-      <footer class="site-footer">
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
-
-    </section>
-
-  
-  </body>
 </html>
