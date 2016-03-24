@@ -4,7 +4,7 @@ They can be ignored altogether, used however you wish in your own program, or us
 This post will discuss the last option. Later we'll see how python's strong introspective powers can be used to leverage these types in conjunction with
 mypy.
 
-`mypy` enables static typing in python. The features include defacto case-classes (using named tuples) and Union types. These are known
+`mypy` is a static analysis tool that simulates strong static typing in python. It coordinates with the built-in `typing` library, which supports type annotations, including defacto case-classes (using named tuples) and Union types. These are known
 more generally as "product types" and "sum types" respectively. A product type is similar to a class in Java. It has pre-defined members (private or public)
 of other types. In a sense it is a "product" of these other types. In mypy, one can declare a product type using classes, or more simply using `NamedTuple.`
 For example, let's create a product type for points in a 3D plane.
@@ -107,26 +107,21 @@ def getColor(legs: RobotLegs) -> int:
     if isinstance(legs.color, SkyBlue): return  0x87CEFA # this is equivalent
 ```
 
-We can even safely use a statically typed dictionary which never raise a KeyErorr:
-```python
-colors = { SkyBlue() : 0x87CEFA } # type: Dict[Color,int]
-. . . . 
-```
 Now, let's make sure the 3D coordinates are valid. For this, we'll need something more powerful than a simple `NamedTuple`. We'll want to refuse all non-positive input. But note that a traditional python class won't be safe because python classes are mutable by default! It doesn't do much good to make a safe `3DPoint` if one can simply overwrite its attributes. But we can create more complex immutable objects in python:
 
 ```python
-class Coordinate(object):
-    def __new__(self, x: float, y: float, z: float) -> Point3D:
+class SafePoint3D(Point3D):
+    def __new__(self, x: float, y: float, z: float) -> SafePoint3D:
         assert x >= 0 and y >= 0 and z >= 0
-        return Point3D(x, y, z)
+        self = super(self, Point3D).__new__(self, (x, y, z))
+        return self
 ```
 
-In fact it's possible to use this technique to *guarantee* that our function will only ever get valid input. It's only possible to construct the sum type of `RobotLegs` through the union type of `Color`; `Color` is by definition one of `Blue`, `Red`. . . and points
-In languages with the concept of private constructors, it's possible to *guarantee* that a RobotLegs cannot be created an invalid state--and therefore that `getColor` can never be passed invalid data--by making the `RobotLegs` constructor private. Unfortunately, we can only document the `make3DCoordinates` function as the point of entry for our API--we can't exclude the constructor as private.
+In fact it's possible to use this technique to *guarantee* that our function will only ever get valid input. It's only possible to construct the sum type of `RobotLegs` through the union type of `Color`; `Color` is by definition one of `Blue`, `Red`. . . and points will always be non-negative! `SafePoint3D`'s `__new__` method is the *only* way to get a value of type `SafePoint3D`, so even if we subclass `SafePoint3D`, we wouldn't be able to override the safety check. But if `SafePoint3D` were a normal python class and not a `NamedTuple`, it would be possible to override its constructor (and the safety check). This essentially enlarges the set of values that `SafePoint3D` represents to include invalid states! Our functions which accept a value of type `SafePoint3D` could no longer be guaranteed a value in a valid state.
 
-Note that the assurance offered by static typing is significantly stronger than the contract offered by ducked typing. If we simply accepted an object with `leftLeg` `rightLeg` and `color` as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type!
+Note that the assurance offered by union types is significantly stronger than the contract offered by ducked typing or by Java-style (non-`final`) classes that allow subclassing. If we simply accepted an object with `leftLeg` `rightLeg` and `color` as a RobotLeg, we'd have no guarantees that these fields were valid, or even that they were the expected type. And if we allow subclassing, users (or ourselves) can undercut our constructor's validation.
 
-`Color` is a very simple Union type, analogous to the "Enums" of other languages (including python 3), while providing additional safety. Bution union types are more powerful; it's possible to create a union type out of product types, and model arbitrary complex 
+`Color` is a very simple Union type, analogous to the "Enums" of other languages (including python 3), while providing additional safety. But union types are quite powerful; it's possible to create a union type out of product types, and model arbitrary complex 
 systems this way. You can think of these types as representing the "set of all possible inputs and outputs" and functions accepting these types as representing the "cobminators" or "all the things I can ever do with my inputs". Together, these form a sort of "algebra" that represents your domain. In the domain of giant robots:
 
 ```python
@@ -152,6 +147,7 @@ foo.py:35: error: Some element of union has no attribute "ammo"
 ```
 Great! we've created an API that's clear, self-documenting, and compartively safe. We've provided some limited guarantees of correctness;
 and our domain is well-defined, which will help us reason about our past and future code moving forward.
+
 mypy is a growing project; it's still in an early stage and being actively developed. It's become an official
 part of they [python](github.com/python) flock as the definitive optional typechecker; it's got the [backing](https://github.com/python/mypy/issues/1276#issuecomment-192981427)
 and [involvement](https://github.com/python/mypy/pull/1277) of [python's creator](https://en.wikipedia.org/wiki/Guido_van_Rossum).
